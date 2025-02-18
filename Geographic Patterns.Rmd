@@ -1,0 +1,4688 @@
+---
+title: "Understanding Geographic Patterns"
+author: "Yui Fujii"
+date: "For more information about each variable,
+please visit the Contextual Framework Excel Spreadsheet"
+output: pdf_document
+geometry: top=0.6in, bottom=0.6in, left=0.6in, right=0.6in
+knitr:
+  opts_chunk:
+    showWarnings: true
+---
+
+\newpage
+
+## Table of Contents
+- [Community + Social Environment](#introduction)
+  - [Volunteer Percent](#subsection-1)
+  - [Civic Organizations](#subsection-1)
+  - [Clustering Percent](#subsection-1)
+  - [Support Ratio](#subsection-1)
+  - [Youth Percent](#subsection-1)
+  - [Economic Connectedness](#subsection-1)
+  - [English Percent](#subsection-1)
+  - [Total Population](#subsection-1)
+  - [Black or African American (non-Hispanic) population](#subsection-1)
+  - [American Indian or Alaskan Native alone (non-Hispanic) population](#subsection-1)
+  - [Asian alone (non-Hispanic) population](#subsection-1)
+  - [Native Hawaiian or Pacific Islander alone (non-Hispanic) population](#subsection-1)
+  - [Two or more races (which may include Hispanic ethnicity) population](#subsection-1)
+  - [Hispanic population](#subsection-1)
+  - [White alone (non-Hispanic) population](#subsection-1)
+  - [Stability](#subsection-1)
+  - [Single-Parent Headed Households](#subsection-1)
+  - [Social Associations](#subsection-1) 
+  - [Correlation Coefficients  Social Associations](#subsection-1) 
+- [Criminal Justice Environment](#methods)
+  - [Correlation Coefficients  Jail Incarceration](#subsection-1)
+- [Economic Environment](#results)
+  - [Unemployment (ACS)](#subsection-1)
+  - [Unemployment Rate (LAUS)](#subsection-1)
+  - [Food Stamps/Supplemental Nutrition Assistance Program (ACS)](#subsection-1)
+  - [Food Stamps/Supplemental Nutrition Assistance Program (HRSA)](#subsection-1)
+  - [Home Ownership](#subsection-1)
+  - [Income inequality (Gini Index)](#subsection-1)
+  - [Livable Income](#subsection-1)
+  - [Median Household Income (ACS)](#subsection-1)
+  - [Median Household Income (SAIPE)](#subsection-1)
+  - [Per Capita Income](#subsection-1)
+  - [People in Poverty (ACS)](#subsection-1)
+  - [People in Poverty (SAIPE)](#subsection-1)
+  - [Public Assistance Income](#subsection-1)
+  - [College Educated](#subsection-1)
+  - [High School Educated](#subsection-1)
+  - [School Funding Adequacy](#subsection-1)
+  - [Food Environment Index](#subsection-1)
+  - [Food Insecurity](#subsection-1)
+  - [Food Swamps](#subsection-1)
+  - [Correlation Coefficients  Limited Access to Healthy Foods](#subsection-1)
+- [Food and Nutrition Environment](#results)
+  - [Broadband Access](#subsection-1)
+  - [Cardiologist Availability](#subsection-1)
+  - [Hospital Availability](#subsection-1)
+  - [Primary Care Physician Availability](#subsection-1)
+  - [Total Health Care Cost](#subsection-1)
+  - [Nurse Practitioner Availability](#subsection-1)
+  - [Percent Uninsured (ACS)](#subsection-1)
+  - [Percent Uninsured (SAHIE)](#subsection-1)
+  - [Diabetes Prevalence (SAHIE)](#subsection-1)
+  - [Diabetes Prevalence (CDC Division of Diabetes Translation)](#subsection-1)
+  - [Excessive Drinking](#subsection-1)
+  - [Frequent Mental Distress](#subsection-1)
+  - [Frequent Physical Distress](#subsection-1)
+  - [Heart Disease Prevalence](#subsection-1)
+  - [High Cholesterol Prevalence](#subsection-1)
+  - [Obesity Prevalence](#subsection-1)
+  - [Physical Inactivity (RWJF)](#subsection-1)
+  - [Physical Inactivity (CDC Division of Diabetes Translation)](#subsection-1)
+  - [Poor or Fair Health](#subsection-1)
+  - [Poor Mental Health Days](#subsection-1)
+  - [Poor Physical Health Days](#subsection-1)
+  - [Smoking Prevalence (RWJF)](#subsection-1)
+  - [Correlation Coefficients  Smoking Prevalence (ACS)](#subsection-1)
+- [Healthcare Environment](#results)
+  - [Overcrowding](#subsection-1)
+  - [Housing Cost Burden](#subsection-1)
+  - [Severe Housing Cost Burden (ACS)](#subsection-1)
+  - [Severe Housing Cost Burden (RWJF)](#subsection-1)
+  - [Correlation Coefficients  Vacancy](#subsection-1)
+- [Neighborhood and Built Environment](#results)
+  - [Access to Opportunities for Physical Activity](#subsection-1)
+  - [Developed Land](#subsection-1)
+  - [Highway Proximity (People)](#subsection-1)
+  - [Impervious Surface](#subsection-1)
+  - [Park Access (1/2 Mile)](#subsection-1)
+  - [Park Access (1 Mile)](#subsection-1)
+  - [Correlation Coefficients  Traffic Volume](#subsection-1)
+- [Physical Environment](#results)
+  - [Air pollution](#subsection-1)
+  - [Agriculture Land Usage](#subsection-1)
+  - [Drinking Water Violations](#subsection-1)
+  - [Forest Coverage](#subsection-1)
+  - [Historical Drought](#subsection-1)
+  - [Annual Number of Extreme Heat Days](#subsection-1)
+  - [Annual Number of Extreme Heat Events](#subsection-1)
+  - [Ozone](#subsection-1)
+  - [Correlation Coefficients  Water Coverage](#subsection-1)
+- [Racial and Economic Segregation](#results)
+  - [Correlation Coefficient  Residential Segregation - Black/White](#subsection-1)
+- [Correlation Coefficients  CVD Mortality](#results)
+
+
+
+
+```{r setup, include=FALSE}
+# Load necessary libraries
+pacman::p_load(
+  tidyverse,
+  rio,                                     # to import data
+  here,                                     # to locate files 
+  readxl,
+  dplyr,
+  ggplot2,
+  knitr,
+  kableExtra,
+  gt,
+  scales,
+  skimr,                                   # Provides summary statistics, Data type info, visual summaries
+  sf,
+  tigris,
+  patchwork,
+  moments,
+  corrplot,
+  ggcorrplot,
+  rlang,
+  gridExtra
+)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, results='hide'}
+
+  # Load your dataset here if it's in a CSV file, for example:
+  fp_str <- as.character(getwd())
+  pos <- regexpr("Data Cleaning", fp_str)
+  fp.mod <- substr(fp_str, 1, pos + attr(pos, "match.length") - 1)
+  
+  fp <- paste0(fp.mod, "/merged_data.csv", sep = "")
+  final_data <- read_csv(fp, col_names = TRUE, trim_ws = FALSE)  # Read the CSV file
+  
+  st_sf <- st_read(here("Data", "quick_map_project-2019_data.gdb")) # State Boundary
+  
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+cat.var <- function(data, var) { 
+  if (var == "AccessToFood_PCT" | var == "support_RATIO") {
+    num <- 4
+    add <- 0.0001
+  } else if (var == "English_PCT" | var == "Blackpop_PCT" |
+             var == "AIANpop_PCT" | var == "Asianpop_PCT" |
+             var == "NHPIpop_PCT" | var == "ImpervSurface_PCT" |
+             var == "Gini_IDX" | var == "FoodInsecurity_PCT" |
+             var == "Insurance_PCT" | var == "Diabetes_PCT" |
+             var == "ExcessAlcohol_PCT" | var == "FreqMentalDistress_PCT" |
+             var == "FreqPhysDistress_PCT" | var == "Obesity_PCT" |
+             var == "PhysInactivity_PCT" | var == "LTPIA_prev_adj" |
+             var == "PoorHealth_PCT" | var == "Smoking_PCT" |
+             var == "HousingProblems_PCT" | var == "PAAccess_PCT" |
+             var == "Youth_PCT" | var == "Assistance_PCT") {
+      num <- 3
+      add <- 0.001
+  } else if (var == "volunteer_PCT" | var == "civic_orgs_PER1K" |
+             var == "Multiracepop_PCT" | var == "Hispanicpop_PCT" |
+             var == "Whitepop_PCT" | var == "Unemployment_PCT" |
+             var == "Unemployment_RT" | var == "SNAP_PCT" ) {
+      num <- 2
+      add <- 0.01
+  } else {
+      num <- 1
+      add <- 0.1
+    }
+  
+  
+    if (var == "EconConnectedness") {
+    # Custom breaks and labels for <1, =1, >1
+    custom_breaks <- c(-Inf, 0.5, 1, 1.1, Inf)  # Four groups
+    cut.labels <- c("<0.5", "0.5 - 1", "1 - 1.1", ">1.1") 
+
+    data <- data %>%
+     mutate(
+        quintile = cut(
+          .data[[var]],
+          breaks = custom_breaks,
+          labels = cut.labels,
+          include.lowest = TRUE,
+         right = TRUE
+       )
+     )
+    # Return the dataset and custom labels
+    return(list(data = data, labels = cut.labels))
+    
+    
+  } else if (var == "WaterViolation_YN") {
+    # Custom breaks and labels
+    custom_breaks <- c(-Inf, 0, Inf)
+    cut.labels <- c("No", "Yes")  
+
+    data <- data %>%
+      mutate(
+        quintile = cut(
+          .data[[var]],
+          breaks = custom_breaks,
+          labels = cut.labels,
+          include.lowest = TRUE,
+          right = TRUE
+        )
+      )
+    # Return the dataset and custom labels
+    return(list(data = data, labels = cut.labels))
+    
+    
+  } else if (var == "stg_hosp" | var == "PatCarCardio_COUNT") {
+    # Create breaks and labels
+    # Explicitly define breakpoints
+    maj.cat.limits <- c(0, 1, 2, 3, 4, max(data[[var]], na.rm = TRUE) + 1)
+
+    # Define category labels
+    cut.labels <- c(
+      "0",
+      "1",
+      "2",
+      "3",
+      paste( "4", max(data[[var]], na.rm = TRUE), sep = " - ") 
+      )# Grouping all values 5 and above
+
+    # Apply custom breaks
+    data <- data %>%
+      mutate(
+        quintile = cut(
+          .data[[var]],
+          breaks = maj.cat.limits,
+          labels = cut.labels,
+          include.lowest = TRUE,
+          right = FALSE
+        )
+      )
+    
+    # Return the dataset and quantile-based labels
+    return(list(data = data, labels = cut.labels))
+  } else if (var == "PrimaryCarePhys_COUNT" | var == "DaysOverStandard_COUNT") {
+    # Create breaks and labels
+    maj.cat.limits <- quantile(data[[var]][data[[var]] > 2], 
+                           probs = seq(0, 1, by = 0.5), 
+                           na.rm = TRUE)
+    
+    cut.labels <- c(
+        paste(0,
+              sep = " - "),
+        paste(1,
+              sep = " - "),
+        paste(2,
+              sep = " - "),
+        paste(maj.cat.limits[1], maj.cat.limits[2],
+              sep = " - "),
+        paste(maj.cat.limits[2], maj.cat.limits[3],
+              sep = " - "),
+        "NA")
+
+    # Add 0 to the breaks explicitly
+    maj.cat.limits <- c(0, 1, 2, maj.cat.limits)
+    
+    # Add categorized variable using quantiles
+    data <- data %>%
+      mutate(
+        quintile = cut(
+          .data[[var]],
+          breaks = maj.cat.limits,
+          include.lowest = TRUE,
+          right = FALSE
+        )
+      )
+    
+    # Return the dataset and quantile-based labels
+    return(list(data = data, labels = cut.labels))
+  }  else if (var == "NHPIpop_PCT"| var == "SocialAssoc_PCT" |
+             var == "APRNs_COUNT") {
+    # Create breaks and labels
+    maj.cat.limits <- quantile(data[[var]][data[[var]] > 0], 
+                           probs = seq(0, 1, by = 0.25), 
+                           na.rm = TRUE)
+    
+    cut.labels <- c(
+        paste(0,
+              sep = " - "),
+        paste(round(maj.cat.limits[1], 3), round(maj.cat.limits[2], 3),
+              sep = " - "),
+        paste(round(maj.cat.limits[2], 3) +0.001, round(maj.cat.limits[3], 3),
+              sep = " - "),
+        paste(round(maj.cat.limits[3], 3) +0.001, round(maj.cat.limits[4], 3),
+              sep = " - "),
+        paste(round(maj.cat.limits[4], 3) +0.001, round(maj.cat.limits[5], 3),
+              sep = " - "),
+        "NA")
+
+    # Add 0 to the breaks explicitly
+    maj.cat.limits <- c(0, maj.cat.limits)
+    
+    # Add categorized variable using quantiles
+    data <- data %>%
+      mutate(
+        quintile = cut(
+          .data[[var]],
+          breaks = maj.cat.limits,
+          include.lowest = TRUE,
+          right = FALSE,
+          na.rm = TRUE
+        )
+      )
+    
+    # Return the dataset and quantile-based labels
+    return(list(data = data, labels = cut.labels))
+  } else {
+    # Default breaks and labels using quantiles
+    maj.cat.limits <- quantile(data[[var]], probs = seq(0, 1, by = 0.25), na.rm = TRUE)
+    
+    cut.labels <- c(
+      paste(round(maj.cat.limits[1], num), round(maj.cat.limits[2], num), sep = " - "),
+      paste(round(maj.cat.limits[2], num) + add, round(maj.cat.limits[3], num), sep = " - "),
+      paste(round(maj.cat.limits[3], num) + add, round(maj.cat.limits[4], num), sep = " - "),
+      paste(round(maj.cat.limits[4], num) + add, round(maj.cat.limits[5], num), sep = " - "),
+      "NA"
+    )
+    
+    # Add categorized variable using quantiles
+    data <- data %>%
+      mutate(
+        quintile = cut(
+          .data[[var]],
+          breaks = maj.cat.limits,
+          include.lowest = TRUE,
+          right = FALSE
+        )
+      )
+    
+    # Return the dataset and quantile-based labels
+    return(list(data = data, labels = cut.labels))
+  }
+}
+
+
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+stat.tab <- function(data, var, tit) { 
+  # Calculate summary statistics
+  if (var == "PatCarCardio_COUNT" | var == "support_RATIO") {
+    num <- 4
+  } else if (var == "Youth_PCT" | var == "English_PCT" |
+             var == "Blackpop_PCT" | var == "AIANpop_PCT" |
+             var == "NHPIpop_PCT" | var == "Asianpop_PCT" |
+             var == "SocialAssoc_PCT" | var == "Assistance_PCT" |
+             var == "AccessToFood_PCT" | var == "FreqMentalDistress_PCT" |
+             var == "FreqPhysDistress_PCT" | var == "ImpervSurface_PCT") { 
+    num <- 3
+  } else if (var == "Population_CT" | var == "StampSNAP_PCT") { 
+    num <- 0
+  } else {
+   num <- 2
+  }
+  
+    # Calculate summary statistics
+  var_stats <- data %>%
+    summarise(
+      Min = min(.data[[var]], na.rm = TRUE),
+      `1%` = quantile(.data[[var]], 0.01, na.rm = TRUE),
+      `10%` = quantile(.data[[var]], 0.10, na.rm = TRUE),
+      `25%` = quantile(.data[[var]], 0.25, na.rm = TRUE),
+      `50%` = quantile(.data[[var]], 0.50, na.rm = TRUE),
+      `75%` = quantile(.data[[var]], 0.75, na.rm = TRUE),
+      `90%` = quantile(.data[[var]], 0.90, na.rm = TRUE),
+      `99%` = quantile(.data[[var]], 0.99, na.rm = TRUE),
+      Max = max(.data[[var]], na.rm = TRUE),
+      Mean = mean(.data[[var]], na.rm = TRUE),
+      Median = median(.data[[var]], na.rm = TRUE),
+      "Zero Count" = sum(.data[[var]] == 0, na.rm = TRUE),
+      "NA Count" = sum(is.na(.data[[var]]))
+    )
+  
+  # Display the summary statistics
+  if (var == "Population_CT" | var == "StampSNAP_PCT" |
+      var == "Smoking_PCT" | var == "Medianincome_USD" |
+      var == "income" | var == "Percapitaincome_USD" |
+      var == "SchoolFunding_Dollar" | var == "total_cost" |
+      var == "support_RATIO") {
+  var_stats[, 1:9] %>%
+    kable(caption = tit, digits = num) %>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed"), position = "left", full_width = F) %>%
+    row_spec(0, background = "white") %>%
+    column_spec(1:9, background = "#D3D3D3")
+      
+  } else {
+  var_stats[, 1:13] %>%
+    kable(caption = tit, digits = num) %>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed"), position = "left", full_width = F) %>%
+    column_spec(1:9, background = "#D3D3D3") %>%
+    column_spec(10:13, background = "white") %>%
+    row_spec(0, bold = TRUE, color = "black")  # Makes the header row bold
+
+    }
+  
+}
+
+stat.tab2 <- function(data, var) {
+    # Calculate summary statistics
+  if (var == "PatCarCardio_COUNT" | var == "support_RATIO") {
+    num <- 4
+  } else if (var == "Youth_PCT" | var == "English_PCT" |
+             var == "Blackpop_PCT" | var == "AIANpop_PCT" |
+             var == "NHPIpop_PCT" | var == "Asianpop_PCT" |
+             var == "SocialAssoc_PCT" | var == "Assistance_PCT" |
+             var == "AccessToFood_PCT" | var == "FreqMentalDistress_PCT" |
+             var == "FreqPhysDistress_PCT") { 
+    num <- 3
+  } else if (var == "Population_CT" | var == "StampSNAP_PCT") { 
+    num <- 0
+  } else {
+   num <- 2
+  }
+  
+    # Calculate summary statistics
+  var_stats <- data %>%
+    summarise(
+      Min = min(.data[[var]], na.rm = TRUE),
+      `1%` = quantile(.data[[var]], 0.01, na.rm = TRUE),
+      `10%` = quantile(.data[[var]], 0.10, na.rm = TRUE),
+      `25%` = quantile(.data[[var]], 0.10, na.rm = TRUE),
+      `50%` = quantile(.data[[var]], 0.50, na.rm = TRUE),
+      `75%` = quantile(.data[[var]], 0.10, na.rm = TRUE),
+      `90%` = quantile(.data[[var]], 0.90, na.rm = TRUE),
+      `99%` = quantile(.data[[var]], 0.99, na.rm = TRUE),
+      Max = max(.data[[var]], na.rm = TRUE),
+      Mean = mean(.data[[var]], na.rm = TRUE),
+      Median = median(.data[[var]], na.rm = TRUE),
+      "Zero Count" = sum(.data[[var]] == 0, na.rm = TRUE),
+      "NA Count" = sum(is.na(.data[[var]]))
+    )
+  # Second table: Columns 10 to 13
+  var_stats[, 10:13] %>%
+    kable(caption = NA, digits = num) %>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed"), position = "left", full_width = F) %>%
+    row_spec(0, background = "white")
+  
+}
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+histogram <- function(data, var, tit, label, cut_labels, width) { 
+
+
+    if (var == "Population_CT" | var == "NHPIpop_PCT" | var == "StampSNAP_PCT") {
+    data <- data %>%
+      filter(.data[[var]] <= quantile(.data[[var]], 0.96, na.rm = TRUE))
+  
+    cap <- "96 Percentile and Above Removed"
+  
+    } else if (var == "Blackpop_PCT"| var == "AIANpop_PCT"| var == "Asianpop_PCT" |
+               var == "Multiracepop_PCT" | var == "Hispanicpop_PCT" | 
+               var == "TotalJailPop_COUNT") {  # Corrected from 'else (var == ...)
+      data <- data %>%
+        filter(.data[[var]] <= quantile(.data[[var]], 0.98, na.rm = TRUE))
+      
+    cap <- "98 Percentile and Above Removed"
+    } else {
+      cap <- ""
+    }
+  
+      if (var == "NHPIpop_PCT" | var == "DaysOverStandard_COUNT") {
+     quintile_colors <<- c("#DCDCDC", "#E4EDF5", "#BDD7E7", "#7BB7DA", "#1662A1",
+                           "#003B6B")
+   } else if (var == "WaterViolation_YN") {
+     quintile_colors <<- c("#BDD7E7", "#003B6B")
+   } else if (var == "EconConnectedness"){
+      # Define a named color palette for quintiles
+     quintile_colors <<- c("#6B2700", "#CF9D57", "#4A88C1", "#003B6B", "#DCDCDC")
+   } else if (var == "SchoolFunding_Dollar" | var == "College_PCT" | 
+              var == "Highschool_PCT" | var == "Broadband_PCT"){
+      # Define a named color palette for quintiles
+      quintile_colors <<- c("#003B6B", "#1662A1", "#4A88C1", "#BDD7E7", "#DCDCDC")
+   } else if (var == "stg_hosp" | var == "PatCarCardio_COUNT" |
+              var == "PrimaryCarePhys_COUNT" | var == "APRNs_COUNT"){
+      # Define a named color palette for quintiles
+      quintile_colors <<- c("#003B6B", "#1662A1", "#4A88C1", "#7BB7DA","#A4D0E8",
+                            "#DCDCDC")
+   } else {
+      # Define a named color palette for quintiles
+      quintile_colors <<- c("#BDD7E7", "#7BB7DA", "#1662A1", "#003B6B", "#DCDCDC")
+   }
+
+    
+ggplot(data, aes(x = .data[[var]], fill = quintile)) +
+  geom_histogram(binwidth = width, color = "black") +
+  scale_fill_manual(values = quintile_colors, name = "Quintile") +
+  labs(title = tit, x = label, y = "Frequency",
+    caption = cap) +
+  theme_minimal() +
+  theme(
+    legend.position = "none",
+    plot.title = element_text(size = 10, face = "bold"),
+    axis.title = element_text(size = 8.5)
+  )
+
+}
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+spatial <- function(data) { 
+  
+  # Call spatial files
+  options(tigris_use_cache = TRUE)  # Cache the shapefiles locally
+  county_shapes <- counties(cb = TRUE, year = 2020, class = "sf")  # Get county-level shape files
+  
+  data <- county_shapes %>%
+    left_join(data, by = c("GEOID" = "FIPS"))
+  
+    return(data)
+}
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+
+map <- function(data, var, tit, cut_labels) { 
+  
+
+      if (var == "NHPIpop_PCT" | var == "DaysOverStandard_COUNT") {
+     quintile_colors <<- c("#DCDCDC", "#E4EDF5", "#BDD7E7", "#7BB7DA", "#1662A1",
+                           "#003B6B")
+   } else if (var == "WaterViolation_YN") {
+     quintile_colors <<- c("#BDD7E7", "#003B6B")
+   } else if (var == "EconConnectedness"){
+      # Define a named color palette for quintiles
+     quintile_colors <<- c("#6B2700", "#CF9D57", "#4A88C1", "#003B6B", "#DCDCDC")
+   } else if (var == "SchoolFunding_Dollar" | var == "College_PCT" | 
+              var == "Highschool_PCT" | var == "Broadband_PCT"){
+      # Define a named color palette for quintiles
+      quintile_colors <<- c("#003B6B", "#1662A1", "#4A88C1", "#BDD7E7", "#DCDCDC")
+   } else if (var == "stg_hosp" | var == "PatCarCardio_COUNT" |
+              var == "PrimaryCarePhys_COUNT" | var == "APRNs_COUNT"){
+      # Define a named color palette for quintiles
+      quintile_colors <<- c("#003B6B", "#1662A1", "#4A88C1", "#7BB7DA","#A4D0E8",
+                            "#DCDCDC")
+   } else {
+      # Define a named color palette for quintiles
+      quintile_colors <<- c("#BDD7E7", "#7BB7DA", "#1662A1", "#003B6B", "#DCDCDC")
+   }
+  
+  
+main_map <- ggplot(data = data) +
+  geom_sf(aes(fill = quintile), color = NA, size = 0) +
+  geom_sf(data = st_sf, fill = NA, color = "black", size = 0, lwd = 0.3) +
+  scale_fill_manual(values = quintile_colors, labels = cut_labels , name = tit) +
+  coord_sf(
+     crs = "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=37.5 +lon_0=-96 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs",
+    xlim = c(-2500000, 2500000),  # Adjusted range for contiguous US
+    ylim = c(-2000000, 1500000),  # Adjusted range for contiguous US
+    expand = FALSE                # Prevent extra padding
+  ) +
+  labs(
+    title = tit) +
+  theme_void() +  # Remove panel background, gridlines, and borders
+  theme(
+    plot.title = element_text(size = 10, face = "bold", , hjust = 0.7),
+    plot.title.position = "panel",
+    legend.position = "right",
+    legend.text = element_text(size = 8),            # Adjust text size in legend
+    legend.title = element_text(size = 9, face = "bold"),  # Adjust legend title size
+    legend.key.size = unit(0.5, "cm")               # Adjust the size of legend keys
+  )
+
+# Alaska map
+alaska_map <- ggplot(data = data %>% filter(STATEFP == "02")) +
+  geom_sf(aes(fill = quintile), color = NA, size = 0.01) +
+  geom_sf(data = st_sf, fill = NA, color = "black", size = 0, lwd = 0.3) +
+  scale_fill_manual(values = quintile_colors, guide = "none") +
+  coord_sf(
+    crs = "+proj=aea +lat_1=55 +lat_2=65 +lat_0=50 +lon_0=-154 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs",
+    xlim = c(-2000000, 1550000),  # Adjusted range for Alaska in Albers Equal Area
+    ylim = c(50, 2500000),    # Adjusted range for Alaska in Albers Equal Area
+    expand = FALSE
+  ) +
+  theme_void() +
+  theme(panel.border = element_rect(color = "black", fill = NA, size = 0.5))
+
+# Hawaii map
+hawaii_map <- ggplot(data = data %>% filter(STATEFP == "15")) +
+  geom_sf(aes(fill = quintile), color = "grey", size = 0.01) +
+  geom_sf(data = st_sf, fill = NA, color = "black", size = 0, lwd = 0.3) +
+  scale_fill_manual(values = quintile_colors, guide = "none") +
+  coord_sf(
+    xlim = c(-161, -154),  # Adjust to Hawaii's longitude range
+    ylim = c(18, 23),      # Adjust to Hawaii's latitude range
+    expand = FALSE
+  ) +
+  theme_void() +
+  theme(panel.border = element_rect(color = "black", fill = NA, size = 0.5))
+
+# Combine maps using patchwork
+final_map <- main_map +
+  inset_element(alaska_map, left = 0.05, bottom = 0.05, right = 0.25, top = 0.25) + # Alaska in the bottom-left corner
+  inset_element(hawaii_map, left = 0.26, bottom = 0.05, right = 0.46, top = 0.25)  # Hawaii next to Alaska
+
+
+# Display final map
+final_map <- main_map +
+  inset_element(alaska_map, left = 0.0, bottom = -0.3, right = 0.25, top = 0.55) +
+    theme(
+    plot.background = element_rect(fill = "white", color = "black", size = .07)
+  ) +
+  inset_element(hawaii_map, left = 0.3, bottom = -0.09, right = 0.45, top = 0.25) +
+  theme(
+    plot.background = element_rect(fill = "white", color = "black", size = .07)
+  )
+
+final_map
+
+}
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, results='hide', fig.width=5, fig.height=4}
+  
+corr <- function(data, var) {
+  
+  # Define mapping of variable names to proper names
+  label_map <- c(
+    "volunteer_PCT" = "Volunteer Percent",
+    "civic_orgs_PER1K" = "Civic Organizations",
+    "clustering_PCT" = "Clustering Percent",
+    "support_RATIO" = "Support Ratio",
+    "Youth_PCT" = "Youth Percent",
+    "EconConnectedness" = "Econ. Connect.",
+    "English_PCT" = "English Percent",
+    "Population_CT" = "Total Population",
+    "Blackpop_PCT" = "Black",
+    "AIANpop_PCT" = "AIAN",
+    "Asianpop_PCT" = "Asian",
+    "NHPIpop_PCT" = "NHOPI",
+    "Multiracepop_PCT" = "Multi-Race",
+    "Hispanicpop_PCT" = "Hispanic",
+    "Whitepop_PCT" = "White",
+    "Stability_PCT" = "Percent Stability",
+    "Parent_PCT" = "Single-Parent HH",
+    "SocialAssoc_PCT" = "Social Ass.",
+    "TotalJailPop_COUNT" = "Jail Pop.",
+    "Unemployment_PCT" = "Percent Unemployment",
+    "Unemployment_RT" = "Unemployment Rate",
+    "SNAP_PCT" = "SNAP (ACS)",
+    "StampSNAP_PCT" = "SNAP (HRSA)",
+    "Homeowner_PCT" = "Home Ownership",
+    "Gini_IDX" = "Income Inequality (Gini Index)",
+    "Livable_PCT" = "Livable Income",
+    "Medianincome_USD" = "Med. House Inc. (ACS)",
+    "income" = "Med. House Inc. (SAIPE)",
+    "Percapitaincome_USD" = "Per Capita Income",
+    "Poverty_PCT" = "People in Poverty (ACS)",
+    "povpct" = "People in Poverty (SAIPE)",
+    "Assistance_PCT" = "Public Ass. Inc.",
+    "College_PCT" = "College Educated",
+    "Highschool_PCT" = "High School Educated",
+    "SchoolFunding_Dollar" = "School Funding Adequacy",
+    "FEI_Index" = "Food Environment Index",
+    "FoodInsecurity_PCT" = "Food Insecurity",
+    "FoodSwamp_RATIO" = "Food Swamps",
+    "AccessToFood_PCT" = "Limited Acc. to Healthy Foods",
+    "Broadband_PCT" = "Broadband Access",
+    "PatCarCardio_COUNT" = "Cardiologist Avail.",
+    "stg_hosp" = "Hospital Avail.",
+    "PrimaryCarePhys_COUNT" = "Primary Care Phys. Avail.",
+    "total_cost" = "Total Health Care Cost",
+    "APRNs_COUNT" = "Nurse Pract. Avail.",
+    "Insurance_PCT" = "Percent Uninsured (ACS)",
+    "pctui" = "Percent Uninsured (SAHIE)",
+    "Diabetes_PCT" = "Diabetes Prev. (SAHIE)",
+    "dm_prev_adj" = "Diabetes Prev. (CDC)",
+    "ExcessAlcohol_PCT" = "Excessive Drinking",
+    "FreqMentalDistress_PCT" = "Freq. Mental Distress",
+    "FreqPhysDistress_PCT" = "Freq. Physical Distress",
+    "prev_hd" = "Heart Disease Prev.",
+    "pl_highchol" = "High Cholesterol Prev.",
+    "Obesity_PCT" = "Obesity Prev. (RWJF)",
+    "ob_prev_adj" = "Obesity Prev. (CDC)",
+    "PhysInactivity_PCT" = "Physical Inactivity (RWJF)",
+    "LTPIA_prev_adj" = "Physical Inactivity (CDC)",
+    "PoorHealth_PCT" = "Poor or Fair Health",
+    "PoorMentHealth_DAYS" = "Poor Mental Health Days",
+    "PoorPhysHealth_DAYS" = "Poor Physical Health Days",
+    "Smoking_PCT" = "Smoking Prevalence",
+    "HomeValue_Cost" = "Median Home Value",
+    "Overcrowd_PCT" = "Overcrowding",
+    "Housingburden30_PCT" = "Housing Cost Burden",
+    "Housingburden50_PCT" = "Sev. Housing Cost Burd. (ACS)",
+    "HousingProblems_PCT" = "Sev. Housing Cost Burd. (RWJF)",
+    "Vacancy_PCT" = "Vacancy",
+    "PAAccess_PCT" = "Access to Opp. for Phys Act",
+    "LandDev_PCT" = "Developed Land",
+    "HighwayProximity_PCT" = "Highway Prox.",
+    "ImpervSurface_PCT" = "Imper. Surface",
+    "ParkWithinHalfMi_PCT" = "Park Access (1/2)",
+    "ParkWithinOneMi_PCT" = "Park Access (1)",
+    "Traffic_Vol" = "Traffic Volume",
+    "AirPollution_PM" = "Air Pollution",
+    "AgLandUse_PCT" = "Agr. Land Usage",
+    "WaterViolation_YN" = "Drink. Water Viol.",
+    "ForestCover_PCT" = "Forest Cov.",
+    "WeeksModDrought_PCT" = "Hist. Drought",
+    "ExtremeHeatDays_COUNT" = "Ann. Number of Ext. Heat Days",
+    "ExtremeHeatEvents_COUNT" = "Ann. Number of Ext. Heat Events",
+    "DaysOverStandard_COUNT" = "Ozone",
+    "WaterCover_PCT" = "Water Coverage",
+    "ResSeg_BW" = "Resid. Seg. - B/W",
+    "allcvd" = "CVD Mortality"
+  )
+
+  # Select variables based on category
+  selected_vars <- switch(var,
+    "Community + Social Environment" = c("volunteer_PCT", "civic_orgs_PER1K", "clustering_PCT",
+                                         "support_RATIO", "Youth_PCT", "EconConnectedness", "English_PCT",
+                                         "Population_CT", "Blackpop_PCT", "AIANpop_PCT", "Asianpop_PCT",
+                                         "NHPIpop_PCT", "Multiracepop_PCT", "Hispanicpop_PCT", "Whitepop_PCT",
+                                         "Stability_PCT", "Parent_PCT", "SocialAssoc_PCT", "allcvd"),
+    "Criminal Justice Environment" = c("TotalJailPop_COUNT", "allcvd"),
+    "Economic Environment" = c("Unemployment_PCT", "Unemployment_RT", "SNAP_PCT", "StampSNAP_PCT",
+                               "Homeowner_PCT", "Gini_IDX", "Livable_PCT", "Medianincome_USD",
+                               "income", "Percapitaincome_USD", "Poverty_PCT", "povpct",
+                               "Assistance_PCT", "allcvd"),
+    "Educational Environment" = c("College_PCT", "Highschool_PCT", "SchoolFunding_Dollar", "allcvd"),
+    "Food and Nutrition Environment" = c("FEI_Index", "FoodInsecurity_PCT", "FoodSwamp_RATIO", "AccessToFood_PCT", "allcvd"),
+    "Healthcare Environment" = c("Broadband_PCT", "PatCarCardio_COUNT", "stg_hosp", "PrimaryCarePhys_COUNT", "total_cost",
+                                 "APRNs_COUNT", "Insurance_PCT", "pctui", "Diabetes_PCT", "dm_prev_adj",
+                                 "ExcessAlcohol_PCT", "FreqMentalDistress_PCT", "FreqPhysDistress_PCT",
+                                 "prev_hd", "pl_highchol", "Obesity_PCT", "ob_prev_adj",
+                                 "PhysInactivity_PCT", "LTPIA_prev_adj", "PoorHealth_PCT",
+                                 "PoorMentHealth_DAYS", "PoorPhysHealth_DAYS", "Smoking_PCT", "allcvd"),
+    "Housing Environment" = c("HomeValue_Cost", "Overcrowd_PCT", "Housingburden30_PCT",
+                     "Housingburden50_PCT", "HousingProblems_PCT", "Vacancy_PCT",
+                     "allcvd"),
+    "Neighborhood and Built Environment" = c("PAAccess_PCT", "LandDev_PCT", "HighwayProximity_PCT",
+                     "ImpervSurface_PCT", "ParkWithinHalfMi_PCT", "ParkWithinOneMi_PCT",
+                     "Traffic_Vol", "allcvd"),
+    "Physical Environment" = c("AirPollution_PM", "AgLandUse_PCT", "WaterViolation_YN",
+                     "ForestCover_PCT", "WeeksModDrought_PCT", "ExtremeHeatDays_COUNT",
+                     "ExtremeHeatEvents_COUNT", "DaysOverStandard_COUNT", "WaterCover_PCT",
+                     "allcvd"),
+    "Racial and Economic Segregation" = c("ResSeg_BW", "allcvd")
+  )
+  
+  
+  
+  
+
+  # Compute correlation matrix
+  cor_matrix <- final_data %>%
+    select(all_of(selected_vars)) %>%
+    cor(use = "pairwise.complete.obs")
+
+  # Replace column and row names with proper labels
+  colnames(cor_matrix) <- label_map[colnames(cor_matrix)]
+  rownames(cor_matrix) <- label_map[rownames(cor_matrix)]
+
+  ggcorrplot(cor_matrix, lab = FALSE, hc.order = TRUE, type = "lower",
+             outline.color = "white", colors = c("#02386E", "white", "#801e18"),
+             tl.cex = 8, show.legend = TRUE, show.diag = TRUE)
+}
+```
+
+
+\newpage
+## Community + Social Environment
+**Indicator**: Civic Engagement  
+**Variable**: Volunteer Percent  
+**Source**: Opportunity Insights   
+**Definition**:"The percentage of Facebook users who are members of a group which is predicted to be about ‘volunteering’ or ‘activism’ based on group title and other group characteristics."  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "volunteer_PCT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "volunteer_PCT", "Summary Statistics for Volunteer Percent")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for civic_orgs_PER1K
+histogram(final_data, "volunteer_PCT", "Histogram of Volunteer Percent", "Volunteer Percent", cut_labels, .4)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data,"volunteer_PCT", "Volunteer\nPercent", cut_labels)  
+
+```
+
+
+\newpage
+## Community + Social Environment 
+**Indicator**: Civic Engagement  
+**Variable**: Civic Organizations  
+**Source**: Opportunity Insights  
+**Definition**: This variable described by Opportunity Insights as "The number of Facebook Pages predicted to be 'Public Good' pages based on page title, category, and other page characteristics, per 1,000 users in the county."
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "civic_orgs_PER1K")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "civic_orgs_PER1K", "Summary Statistics for Civic Organizations")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for civic_orgs_PER1K
+histogram(final_data, "civic_orgs_PER1K", "Histogram of Civic Orgs Per 1K", "Civic Organizations", cut_labels, .3)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "civic_orgs_PER1K", "Civic Org", cut_labels)  
+
+```
+
+\newpage
+
+## Community + Social Environment 
+**Indicator**: Cohesiveness  
+**Variable**: Clustering Percent  
+**Source**: Opportunity Insights  
+**Definition**: This variable is described by Opportunity Insights as "The average fraction of an individual’s friend pairs who are also friends with each other."
+Cohesiveness more broadly is the degree to which social networks are clustered into cliques and whether friendships tend to be supported by mutual friends.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "clustering_PCT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "clustering_PCT", "Summary Statistics for Clustering Percent")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for clustering_PCT
+histogram(final_data, "clustering_PCT", "Histogram of Clustering Percent", "Clustering Percent", cut_labels, .3)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "clustering_PCT", "Clustering\nPercent", cut_labels)  
+
+```
+
+
+\newpage
+## Community + Social Environment 
+**Indicator**: Cohesiveness  
+**Variable**: Support Ratio  
+**Source**: Opportunity Insights  
+**Definition**: This variable described by Opportunity Insights as "The proportion of within-county friendships where the pair of friends share a third mutual friend within the same county." Cohesiveness more broadly is the degree to which social networks are clustered into cliques and whether friendships tend to be supported by mutual friends.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "support_RATIO")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "support_RATIO", "Summary Statistics for Support RATIO")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab2(final_data, "support_RATIO")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=4, fig.height=3}
+# Plot histogram for support_RATIO
+histogram(final_data, "support_RATIO", "Histogram of Support RATIO", "Support RATIO", cut_labels, .004)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3.5}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "support_RATIO", "Support\nRATIO", cut_labels)  
+
+```
+
+
+\newpage
+## Community + Social Environment 
+**Indicator**: Disconnected Youth  
+**Variable**: Youth Percent  
+**Source**: ACS  
+**Definition**: Percentage of teens and young adults ages 16 to 19 who are neither working nor in school.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "Youth_PCT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "Youth_PCT", "Summary Statistics for Youth Percent")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Youth_PCT
+histogram(final_data, "Youth_PCT", "Histogram of Youth Percent", "Youth Percent", cut_labels, .6)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "Youth_PCT", "Youth\nPercent", cut_labels)  
+
+```
+
+
+\newpage
+## Community + Social Environment 
+**Indicator**: Economic Connectedness  
+**Variable**: Economic Connectedness  
+**Source**: Opportunity Insights  
+**Definition**: Opportunity Insights defines economic connectedness as "two times the share of high-SES friends among low-SES individuals, averaged over all
+low-SES individuals in the county." More broadly defined as the degree to which low-income and high-income people are friends with each other.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "EconConnectedness")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "EconConnectedness", "Summary Statistics for Economic Connectedness")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for EconConnectedness
+histogram(final_data, "EconConnectedness", "Histogram of Economic Connectedness", "Economic Connectedness", cut_labels, .01)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "EconConnectedness", "Economic Con.", cut_labels)  
+
+```
+
+
+\newpage
+## Community + Social Environment
+**Indicator**: English Language Proficiency  
+**Variable**: English Percent  
+**Source**: ACS  
+**Definition**: Percent of the population aged greater than or equal to 5 years who speak English less than "very well". 
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "English_PCT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "English_PCT", "Summary Statistics for English Proficiency")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for English_PCT
+histogram(final_data, "English_PCT", "Histogram of English Proficiency", "English Proficiency", cut_labels, 1.3)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "English_PCT", "English\nProficiency", cut_labels)  
+
+```
+
+
+\newpage
+## Community + Social Environment
+**Indicator**: Race and Ethnicity Population Distribution  
+**Variable**: Total Population  
+**Source**: ACS  
+**Definition**: Count of total population for all race and ethnicity. 
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "Population_CT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "Population_CT", "Summary Statistics for Total Population")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab2(final_data, "Population_CT")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=4, fig.height=3}
+# Plot histogram for Population_CT
+histogram(final_data, "Population_CT", "Histogram of Total Population", "Total Population", cut_labels, 8955)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3.5}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data,  "Population_CT", "Total Pop.", cut_labels)  
+
+```
+
+
+\newpage
+## Community + Social Environment
+**Indicator**: Race and Ethnicity Population Distribution  
+**Variable**: Percent of Black or African American (non-Hispanic) population  
+**Source**: ACS  
+**Definition**: Black or African American alone (non-Hispanic) population.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "Blackpop_PCT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "Blackpop_PCT", "Summary Statistics for Percent of Black or African American")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Blackpop_PCT
+histogram(final_data, "Blackpop_PCT", "Histogram of Percent of BAA", "Percent of BAA", cut_labels, 1)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "Blackpop_PCT", "Percent BAA", cut_labels)  
+
+```
+
+
+\newpage
+## Community + Social Environment
+**Indicator**: Race and Ethnicity Population Distribution  
+**Variable**: Percent of American Indian or Alaskan Native alone (non-Hispanic) population  
+**Source**: ACS  
+**Definition**: American Indian or Alaskan Native alone (non-Hispanic) population.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "AIANpop_PCT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "AIANpop_PCT", "Summary Statistics for Percent of American Indian or Alaskan Native")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for AIANpop_PCT
+histogram(final_data, "AIANpop_PCT", "Histogram of Percent of AIAN", "Percent of AIAN", cut_labels, .2)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "AIANpop_PCT", "Percent AIAN", cut_labels)  
+
+```
+
+
+\newpage
+## Community + Social Environment
+**Indicator**: Race and Ethnicity Population Distribution  
+**Variable**: Percent of Asian alone (non-Hispanic) population    
+**Source**: ACS  
+**Definition**: Asian alone (non-Hispanic) population.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "Asianpop_PCT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "Asianpop_PCT", "Summary Statistics for Percent of Asian")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Asianpop_PCT
+histogram(final_data, "Asianpop_PCT", "Histogram of Percent of Asian", "Percent of Asian", cut_labels, .1)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "Asianpop_PCT", "Percent Asian", cut_labels)  
+
+```
+
+
+\newpage
+## Community + Social Environment
+**Indicator**: Race and Ethnicity Population Distribution  
+**Variable**: Percent of Native Hawaiian or Pacific Islander alone (non-Hispanic) population  
+**Source**: ACS  
+**Definition**: Native Hawaiian or Pacific Islander alone (non-Hispanic) population.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "NHPIpop_PCT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "NHPIpop_PCT", "Summary Statistics for Percent of NHOPI")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for NHPIpop_PCT
+histogram(final_data, "NHPIpop_PCT", "Histogram of Percent of NNHOPI", "Percent of NHOPI", cut_labels, .008)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data,  "NHPIpop_PCT", "Percent NHOPI", cut_labels)  
+
+```
+
+
+\newpage
+## Community + Social Environment
+**Indicator**: Race and Ethnicity Population Distribution  
+**Variable**: Percent of Two or more races (which may include Hispanic ethnicity) population  
+**Source**: ACS  
+**Definition**: Two or more races (which may include Hispanic ethnicity) population.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "Multiracepop_PCT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "Multiracepop_PCT", "Summary Statistics for Percent of Multi Race")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Multiracepop_PCT
+histogram(final_data, "Multiracepop_PCT", "Histogram of Percent of Multi Race", "Percent of Multi Race", cut_labels, .3)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "Multiracepop_PCT", "Percent Multi", cut_labels)  
+
+```
+
+
+\newpage
+## Community + Social Environment
+**Indicator**: Race and Ethnicity Population Distribution  
+**Variable**: Percent of Hispanic population  
+**Source**: ACS  
+**Definition**: Hispanic population.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "Hispanicpop_PCT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "Hispanicpop_PCT", "Summary Statistics for Percent of Hispanic")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Hispanicpop_PCT
+histogram(final_data, "Hispanicpop_PCT", "Histogram of Percent of Hispanic", "Percent of Hispanic", cut_labels, 1)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "Hispanicpop_PCT", "Percent of Hisp", cut_labels)  
+
+```
+
+
+\newpage
+## Community + Social Environment
+**Indicator**: Race and Ethnicity Population Distribution  
+**Variable**: Percent of White alone (non-Hispanic) population  
+**Source**: ACS  
+**Definition**: White alone (non-Hispanic) population.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "Whitepop_PCT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "Whitepop_PCT", "Summary Statistics for Percent of White")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Whitepop_PCT
+histogram(final_data, "Whitepop_PCT", "Histogram of Percent of White", "Percent of White", cut_labels, 1)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "Whitepop_PCT", "Percent White", cut_labels)  
+
+```
+
+
+\newpage
+## Community + Social Environment
+**Indicator**: Residential stability  
+**Variable**: Percent Stability  
+**Source**: ACS  
+**Definition**: Percent of households that were still in the same house one year ago.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "Stability_PCT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "Stability_PCT", "Summary Statistics for Percent Stability")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Stability_PCT
+histogram(final_data, "Stability_PCT", "Histogram of Percent Stability", "Percent Stability", cut_labels, .5)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "Stability_PCT", "Percent Stability", cut_labels)  
+
+```
+
+
+\newpage
+## Community + Social Environment
+**Indicator**: Single-Parent Headed Households  
+**Variable**: Single-Parent Headed Households  
+**Source**: ACS  
+**Definition**: Percentage of households headed by a single parent (no spouse or partner present) living alone with children under the age of 18 in the household.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "Parent_PCT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "Parent_PCT", "Summary Statistics for Percent Single-Parent Headed Households")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Parent_PCT
+histogram(final_data, "Parent_PCT", "Histogram of Percent Single-Parent Headed Households", "Percent Single-Parent Headed Households", cut_labels, .7)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "Parent_PCT", "Percent Single\nParent HH", cut_labels)  
+
+```
+
+
+\newpage
+## Community + Social Environment
+**Indicator**: Social Associations  
+**Variable**: Social Associations  
+**Source**: ACS  
+**Definition**: Number of membership associations per 10,000 population. Per County Health Rankings, "The membership organizations in this measure include civic organizations, bowling centers, golf clubs, fitness centers, sports organizations, religious organizations, political organizations, labor organizations, business organizations, and professional organizations."  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "SocialAssoc_PCT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "SocialAssoc_PCT", "Summary Statistics for Percent Social Associations")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for SocialAssoc_PCT
+histogram(final_data, "SocialAssoc_PCT", "Histogram of Percent Social Associations", "Percent Social Associations", cut_labels, .7)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "SocialAssoc_PCT", "Percent Social Ass.", cut_labels)  
+
+```
+
+
+\newpage
+## Correlation Coefficients Community + Social Environment  
+```{r, echo=FALSE, warning=FALSE, message=FALSE, results='hide'}
+
+# Call the function and get both the data and cut.labels
+corr(final_data, "Community + Social Environment")
+
+
+```
+
+
+
+\newpage
+## Criminal Justice Environment  
+**Indicator**: Jail Incarceration  
+**Variable**: Jail Population Count  
+**Source**: Trends.vera.org  
+**Definition**: Number of people incarcerated in jail.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "TotalJailPop_COUNT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "TotalJailPop_COUNT", "Summary Statistics for Count of Jail incarceration")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for TotalJailPop_COUNT
+histogram(final_data, "TotalJailPop_COUNT", "Histogram of Count of Jail incarceration", "Count of Jail incarceration", cut_labels, 20)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "TotalJailPop_COUNT", "Count of Jail inc.", cut_labels)  
+
+```
+
+
+\newpage
+## Correlation Coefficients Criminal Justice Environment  
+```{r, echo=FALSE, warning=FALSE, message=FALSE, results='hide'}
+
+# Call the function and get both the data and cut.labels
+corr(final_data, "Criminal Justice Environment")
+
+
+```
+
+
+\newpage
+## Economic Environment  
+**Indicator**: Unemployment  
+**Variable**: Percent Unemployment  
+**Source**: ACS  
+**Definition**: Percent of adults aged 16 years and older in the labor force (as civilians, meaning non-armed forces) and unemployed.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "Unemployment_PCT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "Unemployment_PCT", "Summary Statistics for Percent Unemployment")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Unemployment_PCT
+histogram(final_data, "Unemployment_PCT", "Histogram of Percent Unemployment", "Percent Unemployment", cut_labels, .4)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "Unemployment_PCT", "Percent Unemp.", cut_labels)  
+
+```
+
+
+\newpage
+## Economic Environment  
+**Indicator**: Unemployment Rate  
+**Variable**: Unemployment Rate  
+**Source**: Local Area Unemployment Statistics  
+**Definition**: Rate of Unemployment for all industries, all occupations, aged 16 years and older for all origins, races, sex, and education levels.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "Unemployment_RT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "Unemployment_RT", "Summary Statistics for Unemployment Rate")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Unemployment_RT
+histogram(final_data, "Unemployment_RT", "Histogram of Unemployment Rate", "Unemployment Rate", cut_labels, .2)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "Unemployment_RT", "Unemp. Rate", cut_labels)  
+
+```
+
+
+\newpage
+## Economic Environment  
+**Indicator**: Food Stamps/Supplemental Nutrition Assistance Program  
+**Variable**: Food Stamps/Supplemental Nutrition Assistance Program  
+**Source**: ACS  
+**Definition**: Percentage of households receiving SNAP benefits in the past 12 months.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "SNAP_PCT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "SNAP_PCT", "Summary Statistics for Percent SNAP")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for SNAP_PCT
+histogram(final_data, "SNAP_PCT", "Histogram of Percent SNAP", "Percent SNAP", cut_labels, .7)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "SNAP_PCT", "Percent SNAP", cut_labels)  
+
+```
+
+
+\newpage
+## Economic Environment  
+**Indicator**: Food Stamps/Supplemental Nutrition Assistance Program  
+**Variable**: Food Stamps/Supplemental Nutrition Assistance Program  
+**Source**: Health Resource and Services Administration  
+**Definition**: Number of households receiving SNAP benefits in 2020.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "StampSNAP_PCT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "StampSNAP_PCT", "Summary Statistics for SNAP")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab2(final_data, "StampSNAP_PCT")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for StampSNAP_PCT
+histogram(final_data, "StampSNAP_PCT", "Histogram of SNAP", "SNAP", cut_labels, 650)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3.5}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "StampSNAP_PCT", "SNAP", cut_labels)  
+
+```
+
+
+\newpage
+## Economic Environment  
+**Indicator**: Home Ownership  
+**Variable**: Home Ownership  
+**Source**: ACS  
+**Definition**: Percent of all households occupied by home owners.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "Homeowner_PCT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "Homeowner_PCT", "Summary Statistics for Home Ownership")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Homeowner_PCT
+histogram(final_data, "Homeowner_PCT", "Histogram of Home Ownership", "Home Ownership", cut_labels, 1)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "Homeowner_PCT", "Home Owner.", cut_labels)  
+
+```
+
+
+\newpage
+## Economic Environment  
+**Indicator**: Income inequality (Gini Index)  
+**Variable**: Income inequality (Gini Index)  
+**Source**: ACS  
+**Definition**: The Gini Index is a summary measure of income inequality. The Gini coefficient incorporates the detailed shares data into a single statistic, which summarizes the dispersion of income across the entire income distribution.  The Gini coefficient ranges from 0, indicating perfect equality (where everyone receives an equal share), to 1, perfect inequality (where only one recipient or group of recipients receives all the income).  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "Gini_IDX")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "Gini_IDX", "Summary Statistics for Income inequality (Gini Index)")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Gini_IDX
+histogram(final_data, "Gini_IDX", "Histogram of Income inequality (Gini Index)", "Income inequality (Gini Index)", cut_labels, .005)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3.5}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "Gini_IDX", "Income inequality\n(Gini Index)", cut_labels)  
+
+```
+
+
+\newpage
+## Economic Environment  
+**Indicator**: Livable Income  
+**Variable**: Livable Income  
+**Source**: ACS  
+**Definition**: Percentage of adults whose household income is higher than 200% of the federal poverty level.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "Livable_PCT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "Livable_PCT", "Summary Statistics for Livable Income")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Gini_IDX
+histogram(final_data, "Livable_PCT", "Histogram of Livable Income", "Livable Income", cut_labels, 1)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "Livable_PCT", "Livable Income", cut_labels)  
+
+```
+
+
+\newpage
+## Economic Environment  
+**Indicator**: Median Household Income  
+**Variable**: Median Household Income  
+**Source**: ACS  
+**Definition**: Percentage of adults whose household income is higher than 200% of the federal poverty level.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "Medianincome_USD")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "Medianincome_USD", "Summary Statistics for Percent Median Household Income")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab2(final_data, "Medianincome_USD")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Medianincome_USD
+histogram(final_data, "Medianincome_USD", "Histogram of Percent Median Household Income", "Percent Median Household Income", cut_labels, 2097)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3.5}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "Medianincome_USD", "Percent Median\nHousehold Income", cut_labels)  
+
+```
+
+
+\newpage
+## Economic Environment  
+**Indicator**: Median Household Income  
+**Variable**: Median Household Income  
+**Source**: Census - SAIPE  
+**Definition**: Dollar Amount of Median Household Income.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "income")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "income", "Summary Statistics for Median Household Income")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab2(final_data, "income")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for income
+histogram(final_data, "income", "Histogram of Median Household Income", "Median Household Income", cut_labels, 1500)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3.5}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "income", "Percent Median\nHousehold Income", cut_labels)  
+
+```
+
+
+\newpage
+## Economic Environment  
+**Indicator**: Per Capita Income  
+**Variable**: Per Capita Income  
+**Source**: ACS  
+**Definition**: Per Capita income in the past 12 months.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "Percapitaincome_USD")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "Percapitaincome_USD", "Summary Statistics for Per Capita Income")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab2(final_data, "Percapitaincome_USD")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Percapitaincome_USD
+histogram(final_data, "Percapitaincome_USD", "Histogram of Per Capita Income", "Per Capita Income", cut_labels, 900)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3.5}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "Percapitaincome_USD", "Per Capita Income", cut_labels)  
+
+```
+
+
+\newpage
+## Economic Environment  
+**Indicator**: People in Poverty  
+**Variable**: People in Poverty  
+**Source**: ACS  
+**Definition**: Percent of people with income below the poverty level in the past 12 months.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "Poverty_PCT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "Poverty_PCT", "Summary Statistics for People in Poverty")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "Poverty_PCT", "Histogram of People in Poverty", "People in Poverty", cut_labels, .8)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "Poverty_PCT", "People in Pov.", cut_labels)  
+
+```
+
+
+\newpage
+## Economic Environment  
+**Indicator**: People in Poverty  
+**Variable**: People in Poverty  
+**Source**: Census - SAIPE  
+**Definition**: Percentage living in poverty, all ages.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "povpct")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "povpct", "Summary Statistics for People in Poverty")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "povpct", "Histogram of People in Poverty", "People in Poverty", cut_labels, .5)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "povpct", "People in Pov.", cut_labels)  
+
+```
+
+
+\newpage
+## Economic Environment  
+**Indicator**: Public Assistance Income  
+**Variable**: Public Assistance Income  
+**Source**: ACS  
+**Definition**: Percentage of households receiving public assistance income (TANF, general assistance) in the past 12 months.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "Assistance_PCT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "Assistance_PCT", "Summary Statistics for Public Assistance Income")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "Assistance_PCT", "Histogram of Public Assistance Income", "Public Assistance Income", cut_labels, .6)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "Assistance_PCT", "Public Ass.\nIncome", cut_labels)  
+
+```
+
+
+\newpage
+## Correlation Coefficients Economic Environment  
+```{r, echo=FALSE, warning=FALSE, message=FALSE, results='hide'}
+
+# Call the function and get both the data and cut.labels
+corr(final_data, "Economic Environment")
+
+
+```
+
+
+\newpage
+## Educational Environment  
+**Indicator**: College Educated  
+**Variable**: College Educated  
+**Source**: ACS  
+**Definition**: Percent of the population aged greater than or equal to 25 years with bachelor’s degree or higher.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "College_PCT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "College_PCT", "Summary Statistics for College Educated")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "College_PCT", "Histogram of College Educated", "College Educated", cut_labels, .8)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "College_PCT", "College Edu.", cut_labels)  
+
+```
+
+
+\newpage
+## Educational Environment  
+**Indicator**: High School Educated  
+**Variable**: High School Educated  
+**Source**: ACS  
+**Definition**: Percent of adults aged greater than or equal to 25 years with (or without) a high school diploma or GED.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "Highschool_PCT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "Highschool_PCT", "Summary Statistics for High School Educated")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "Highschool_PCT", "Histogram of High School Educated", "High School Educated", cut_labels, .6)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "Highschool_PCT", "High School\nEducated", cut_labels)  
+
+```
+
+
+\newpage
+## Educational Environment  
+**Indicator**: School Funding  
+**Variable**: School Funding Adequacy  
+**Source**: RWJF County Health Rankings (original source: School Finance Indicators Database)  
+**Definition**: Average gap in dollars between actual and required spending per pupil among public school districts. Required spending is an estimate of dollars needed to achieve U.S. average test scores in each district.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "SchoolFunding_Dollar")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "SchoolFunding_Dollar", "Summary Statistics for School Funding Adequacy")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab2(final_data, "SchoolFunding_Dollar")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "SchoolFunding_Dollar", "Histogram of School Funding Adequacy", "School Funding Adequacy", cut_labels, 1200)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3.5}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "SchoolFunding_Dollar", "School Funding\nAdequacy", cut_labels)  
+
+```
+
+
+\newpage
+## Correlation Coefficients Educational Environment  
+```{r, echo=FALSE, warning=FALSE, message=FALSE, results='hide'}
+
+# Call the function and get both the data and cut.labels
+corr(final_data, "Educational Environment")
+
+
+```
+
+
+\newpage
+## Food and Nutrition Environment    
+**Indicator**: Food Environment Index    
+**Variable**: Food Environment Index  
+**Source**: RWJF County Health Rankings (original source: USDA Food Environment Atlas; Map the Meal Gap from Feeding America)  
+**Definition**: Index of factors that contribute to a healthy food environment, from 0 (worst) to 10 (best).  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "FEI_Index")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "FEI_Index", "Summary Statistics for Food Environment Index")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "FEI_Index", "Histogram of Food Environment Index", "Food Environment Index", cut_labels, .1)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "FEI_Index", "Food Env.\nIndex", cut_labels)  
+
+```
+
+
+\newpage
+## Food and Nutrition Environment    
+**Indicator**: Food Insecurity  
+**Variable**: Food Insecurity  
+**Source**: RWJF County Health Rankings (from Map the Meal Gap)  
+**Definition**: Percent of population meeting USDA definition for food insecure, estimated with statistical modeling from state level Current Population Survey data.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "FoodInsecurity_PCT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "FoodInsecurity_PCT", "Summary Statistics for Food Insecurity")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "FoodInsecurity_PCT", "Histogram of Food Insecurity", "Food Insecurity", cut_labels, .003)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "FoodInsecurity_PCT", "Food Insecurity", cut_labels)  
+
+```
+
+
+\newpage
+## Food and Nutrition Environment    
+**Indicator**: Food Swamps  
+**Variable**: Food Swamps  
+**Source**: RWJF County Health Rankings (from Map the Meal Gap)  
+**Definition**: Ratio of the number of retail sources of unhealthy food (fast food restaurants and convenience stores) to the number of retail sources of healthy food (grocery stores and supermarkets).  
+*Each indicator reported individually: ratio would need to be constructed  
+1. Number of limited-service restaurants in the county (2011 and 2016)  
+2. Number of convenience stores in the county (2011 and 2016)  
+3. Number of supermarkets and grocery stores in the county (2011 and 2016)  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "FoodSwamp_RATIO")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "FoodSwamp_RATIO", "Summary Statistics for Food Swamps")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "FoodSwamp_RATIO", "Histogram of Food Swamps", "Food Swamps", cut_labels, .4)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3.5}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "FoodSwamp_RATIO", "Food Swamps", cut_labels)  
+
+```
+
+
+\newpage
+## Food and Nutrition Environment    
+**Indicator**: Limited Access to Healthy Foods  
+**Variable**: Limited Access to Healthy Foods  
+**Source**: RWJF County Health Rankings (original source: USDA Food Environment Atlas)  
+**Definition**: Percentage of population who are low-income and do not live close to a grocery store.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "AccessToFood_PCT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "AccessToFood_PCT", "Summary Statistics for Limited Access to Healthy Foods")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "AccessToFood_PCT", "Histogram of Limited Access to Healthy Foods", "Limited Access to Healthy Foods", cut_labels, .008)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "AccessToFood_PCT", "Limited Access to\nHealthy Foods", cut_labels)  
+
+```
+
+
+\newpage
+## Correlation Coefficients Food and Nutrition Environment  
+```{r, echo=FALSE, warning=FALSE, message=FALSE, results='hide'}
+
+# Call the function and get both the data and cut.labels
+corr(final_data, "Food and Nutrition Environment")
+
+
+```
+
+
+\newpage
+## Healthcare Environment   
+**Indicator**: Broadband Access  
+**Variable**: Broadband Access  
+**Source**: ACS  
+**Definition**: Estimated percent of households with broadband internet connection.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "Broadband_PCT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "Broadband_PCT", "Summary Statistics for Broadband Access")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "Broadband_PCT", "Histogram of Broadband Access", "Broadband Access", cut_labels, .8)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "Broadband_PCT", "Broadband/nAccess", cut_labels)  
+
+```
+
+
+\newpage
+## Healthcare Environment   
+**Indicator**: Cardiologist Availability  
+**Variable**: Cardiologist Availability  
+**Source**: Area Health Resource File/American Medical Association  
+**Definition**: Number of cardiologists who provide patient care (meaning in an office or hospital, excluding those those are in teaching, research, or "other" positions) (appears to be a count, but original definition in this cell said per 100,000).  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "PatCarCardio_COUNT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "PatCarCardio_COUNT", "Summary Statistics for Cardiologist Availability")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "PatCarCardio_COUNT", "Histogram of Cardiologist Availability", "Cardiologist Availability", cut_labels, 8)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "PatCarCardio_COUNT", "Cardiologist\nAvailability", cut_labels)  
+
+```
+
+
+\newpage
+## Healthcare Environment   
+**Indicator**: Hospital Availability  
+**Variable**: Hospital Availability  
+**Source**: Area Health Resource File/American Medical Association  
+**Definition**: Number of hospitals within a geographic unit.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "stg_hosp")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "stg_hosp", "Summary Statistics for Hospital Availability")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "stg_hosp", "Histogram of Hospital Availability", "Hospital Availability", cut_labels, 1)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "stg_hosp", "Hospital\nAvailability", cut_labels)  
+
+```
+
+
+\newpage
+## Healthcare Environment   
+**Indicator**: Primary Care Physician Availability  
+**Variable**: Primary Care Physician Availability  
+**Source**: Area Health Resource File/American Medical Association  
+**Definition**: Number of active non-federal MD and DO PCPs (appears to be a count, but original definition in this cell said per 100,000).  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "PrimaryCarePhys_COUNT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "PrimaryCarePhys_COUNT", "Summary Statistics for Primary Care Physician Availability")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "PrimaryCarePhys_COUNT", "Histogram of Primary Care Physician Availability", "Primary Care Physician Availability", cut_labels, 100)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "PrimaryCarePhys_COUNT", "Primary Care\nPhys. Ava.", cut_labels)  
+
+```
+
+
+\newpage
+## Healthcare Environment    
+**Indicator**: Total Health Care Cost  
+**Variable**: Total Health Care Cost  
+**Source**: Centers for Medicare and Medicaid Services  
+**Definition**: Cost of care per capita for Medicare Beneficiaries diagnosed with heart disease.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "total_cost")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "total_cost", "Summary Statistics for Total Health Care Cost")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab2(final_data, "total_cost")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "total_cost", "Histogram of Total Health Care Cost", "Total Health Care Cost", cut_labels, 800)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3.5}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "total_cost", "Total Health\nCare Cost", cut_labels)  
+
+```
+
+
+\newpage
+## Healthcare Environment    
+**Indicator**: Nurse Practitioner Availability  
+**Variable**: Nurse Practitioner Availability  
+**Source**: Centers for Medicare and Medicaid Services  
+**Definition**: Cost of care per capita for Medicare Beneficiaries diagnosed with heart disease.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "APRNs_COUNT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "APRNs_COUNT", "Summary Statistics for Nurse Practitioner Availability")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "APRNs_COUNT", "Histogram of Nurse Practitioner Availability", "Nurse Practitioner Availability", cut_labels, 140)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "APRNs_COUNT", "Nurse Practitioner\nAvailability", cut_labels)  
+
+```
+
+
+\newpage
+## Healthcare Environment    
+**Indicator**: Percent Uninsured  
+**Variable**: Percent Uninsured  
+**Source**: ACS  
+**Definition**: Percentage of adults aged 20 and above with diagnosed diabetes (age-adjusted).  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "Insurance_PCT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "Insurance_PCT", "Summary Statistics for Percent Uninsured")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "Insurance_PCT", "Histogram of Percent Uninsured", "Percent Uninsured", cut_labels, .3)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "Insurance_PCT", "Percent\nUninsured", cut_labels)  
+
+```
+
+
+\newpage
+## Healthcare Environment    
+**Indicator**: Percent Uninsured  
+**Variable**: Percent Uninsured  
+**Source**: Census - SAHIE  
+**Definition**: Percentage without health insurance, under age 65.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "pctui")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "pctui", "Summary Statistics for Percent Uninsured")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "pctui", "Histogram of Percent Uninsured", "Percent Uninsured", cut_labels, .5)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "pctui", "Percent\nUninsured", cut_labels)  
+
+```
+
+
+\newpage
+## Healthcare Environment    
+**Indicator**: Diabetes Prevalence  
+**Variable**: Diabetes Prevalence  
+**Source**: Census - SAHIE  
+**Definition**: Percentage of adults aged 20 and above with diagnosed diabetes (age-adjusted).  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "Diabetes_PCT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "Diabetes_PCT", "Summary Statistics for Diabetes Prevalence")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "Diabetes_PCT", "Histogram of Diabetes Prevalence", "Diabetes Prevalence", cut_labels, .002)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "Diabetes_PCT", "Diabetes\nPrevalence", cut_labels)  
+
+```
+
+
+\newpage
+## Healthcare Environment    
+**Indicator**: Diabetes Prevalence      
+**Variable**: Diabetes Prevalence    
+**Source**: CDC Division of Diabetes Translation  
+**Definition**: Percentage of adults aged 20 and above with diagnosed diabetes (age-adjusted).  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "dm_prev_adj")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "dm_prev_adj", "Summary Statistics for Diabetes Prevalence")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "dm_prev_adj", "Histogram of Diabetes Prevalence", "Diabetes Prevalence", cut_labels, .2)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "dm_prev_adj", "Diabetes\nPrevalence", cut_labels)  
+
+```
+
+
+\newpage
+## Healthcare Environment  
+**Indicator**: Excessive Drinking  
+**Variable**: Excessive Drinking  
+**Source**: RWJF County Health Rankings (original source: BRFSS)  
+**Definition**: Percentage of adults that report excessive drinking.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "ExcessAlcohol_PCT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "ExcessAlcohol_PCT", "Summary Statistics for Excessive Drinking")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "ExcessAlcohol_PCT", "Histogram of Excessive Drinking", "Excessive Drinking", cut_labels, .002)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "ExcessAlcohol_PCT", "Excessive\nDrinking", cut_labels)  
+
+```
+
+
+\newpage
+## Healthcare Environment  
+**Indicator**: Frequent Mental Distress  
+**Variable**: Frequent Mental Distress  
+**Source**: RWJF County Health Rankings (original source: BRFSS)  
+**Definition**: Percentage of adults reporting 14 or more days of poor mental health per month (age-adjusted).  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "FreqMentalDistress_PCT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "FreqMentalDistress_PCT", "Summary Statistics for Frequent Mental Distress")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "FreqMentalDistress_PCT", "Histogram of Frequent Mental Distress", "Frequent Mental Distress", cut_labels, .002)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "FreqMentalDistress_PCT", "Frequent Mental\nDistress", cut_labels)  
+
+```
+
+
+\newpage
+## Healthcare Environment  
+**Indicator**: Frequent Physical Distress  
+**Variable**: Frequent Physical Distress  
+**Source**: RWJF County Health Rankings (original source: BRFSS)  
+**Definition**: Percentage of adults reporting 14 or more days of poor physical health per month (age-adjusted).  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "FreqPhysDistress_PCT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "FreqPhysDistress_PCT", "Summary Statistics for Frequent Physical Distress")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "FreqPhysDistress_PCT", "Histogram of Frequent Physical Distress", "Frequent Physical Distress", cut_labels, .002)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "FreqPhysDistress_PCT", "Frequent Physical\nDistress", cut_labels)  
+
+```
+
+
+\newpage
+## Healthcare Environment  
+**Indicator**: Heart Disease Prevalence  
+**Variable**: Heart Disease Prevalence  
+**Source**: Centers for Medicare and Medicaid Services  
+**Definition**: Prevalence of diagnosed heart disease among medicare beneficiaries.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "prev_hd")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "prev_hd", "Summary Statistics for Heart Disease Prevalence")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "prev_hd", "Histogram of Heart Disease Prevalence", "Heart Disease Prevalence", cut_labels, .6)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "prev_hd", "Heart Disease Prevalence", cut_labels)  
+
+```
+
+
+\newpage
+## Healthcare Environment  
+**Indicator**: High Cholesterol Prevalence  
+**Variable**: High Cholesterol Prevalence  
+**Source**: PLACES  
+**Definition**: Percentage of high cholesterol among adults screened in past 5 years ages 18+.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "pl_highchol")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "pl_highchol", "Summary Statistics for High Cholesterol Prevalence")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "pl_highchol", "Histogram of High Cholesterol Prevalence", "High Cholesterol Prevalence", cut_labels, .3)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "pl_highchol", "High Cholesterol\nPrevalence", cut_labels)  
+
+```
+
+
+\newpage
+## Healthcare Environment  
+**Indicator**: Obesity Prevalence  
+**Variable**: Obesity Prevalence  
+**Source**: RWJF County Health Rankings (original source: BRFSS)  
+**Definition**: Percentage of the adult population (age 18 and older) that reports a body mass index (BMI) greater than or equal to 30 kg/m2 (age-adjusted).  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "Obesity_PCT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "Obesity_PCT", "Summary Statistics for Obesity Prevalence")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "Obesity_PCT", "Histogram of Obesity Prevalence", "Obesity Prevalence", cut_labels, .005)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "Obesity_PCT", "Obesity\nPrevalence", cut_labels)  
+
+```
+
+
+\newpage
+## Healthcare Environment  
+**Indicator**: Obesity Prevalence  
+**Variable**: Obesity Prevalence  
+**Source**: CDC Division of Diabetes Translation  
+**Definition**: Obesity, Age-Adjusted Percentage, 20+.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "ob_prev_adj")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "ob_prev_adj", "Summary Statistics for Obesity Prevalence")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "ob_prev_adj", "Histogram of Obesity Prevalence", "Obesity Prevalence", cut_labels, .4)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "ob_prev_adj", "Obesity\nPrevalence", cut_labels)  
+
+```
+
+
+\newpage
+## Healthcare Environment  
+**Indicator**: Physical Inactivity  
+**Variable**: Physical Inactivity  
+**Source**: RWJF County Health Rankings (original source: BRFSS)  
+**Definition**: Percentage of leisure-time physical inactivity among adults ages 20+ (age-adjusted).  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "PhysInactivity_PCT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "PhysInactivity_PCT", "Summary Statistics for Physical Inactivity")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "PhysInactivity_PCT", "Histogram of Physical Inactivity", "Physical Inactivity", cut_labels, .005)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "PhysInactivity_PCT", "Physical\nInactivity", cut_labels)  
+
+```
+
+
+\newpage
+## Healthcare Environment  
+**Indicator**: Physical Inactivity  
+**Variable**: Physical Inactivity  
+**Source**: CDC Division of Diabetes Translation  
+**Definition**: Percentage of leisure-time physical inactivity among adults ages 20+ (age-adjusted).  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "LTPIA_prev_adj")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "LTPIA_prev_adj", "Summary Statistics for Physical Inactivity")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "LTPIA_prev_adj", "Histogram of Physical Inactivity", "Physical Inactivity", cut_labels, .3)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "LTPIA_prev_adj", "Physical\nInactivity", cut_labels)  
+
+```
+
+
+\newpage
+## Healthcare Environment  
+**Indicator**: Poor or Fair Health  
+**Variable**: Poor or Fair Health  
+**Source**: RWJF County Health Rankings (original source: BRFSS)  
+**Definition**: Percent of adults who self-rate their health as poor or fair.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "PoorHealth_PCT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "PoorHealth_PCT", "Summary Statistics for Poor or Fair Health")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "PoorHealth_PCT", "Histogram of Poor or Fair Health", "Poor or Fair Health", cut_labels, .005)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "PoorHealth_PCT", "Poor or Fair\nHealth", cut_labels)  
+
+```
+
+
+\newpage
+## Healthcare Environment  
+**Indicator**: Poor Mental Health Days  
+**Variable**: Poor Mental Health Days  
+**Source**: RWJF County Health Rankings (original source: BRFSS)  
+**Definition**: Average number of mentally unhealthy days reported in past 30 days (age-adjusted).  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "PoorMentHealth_DAYS")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "PoorMentHealth_DAYS", "Summary Statistics for Poor Mental Health Days")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "PoorMentHealth_DAYS", "Histogram of Poor Mental Health Days", "Poor Mental Health Days", cut_labels, .05)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "PoorMentHealth_DAYS", "Poor Mental\nHealth Days", cut_labels)  
+
+```
+
+
+\newpage
+## Healthcare Environment  
+**Indicator**: Poor Physical Health Days  
+**Variable**: Poor Physical Health Days  
+**Source**: RWJF County Health Rankings (original source: BRFSS)  
+**Definition**: Average number of physically unhealthy days reported in past 30 days (age-adjusted).  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "PoorPhysHealth_DAYS")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "PoorPhysHealth_DAYS", "Summary Statistics for Poor Physical Health Days")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "PoorPhysHealth_DAYS", "Histogram of Poor Physical Health Days", "Poor Physical Health Days", cut_labels, .05)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "PoorPhysHealth_DAYS", "Poor Physical\nHealth Days", cut_labels)  
+
+```
+
+
+\newpage
+## Healthcare Environment  
+**Indicator**: Smoking Prevalence  
+**Variable**: Smoking Prevalence  
+**Source**: RWJF County Health Rankings (original source: BRFSS)  
+**Definition**: Percentage of adults who are current smokers (age-adjusted).  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "Smoking_PCT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "Smoking_PCT", "Summary Statistics for Smoking Prevalence")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab2(final_data, "Smoking_PCT")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "Smoking_PCT", "Histogram of Poor Smoking Prevalence", "Smoking Prevalence", cut_labels, .005)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3.5}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "Smoking_PCT", "Smoking\nPrevalence", cut_labels)  
+
+```
+
+
+\newpage
+## Correlation Coefficients Healthcare Environment  
+```{r, echo=FALSE, warning=FALSE, message=FALSE, results='hide'}
+
+# Call the function and get both the data and cut.labels
+corr(final_data, "Healthcare Environment")
+
+
+```
+
+
+\newpage
+## Housing Environment  
+**Indicator**: Median Home Value  
+**Variable**: Median Home Value  
+**Source**: ACS  
+**Definition**: Percent of households with more than 1 occupant per room.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "HomeValue_Cost")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "HomeValue_Cost", "Summary Statistics for Median Home Value")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "HomeValue_Cost", "Histogram of Median Home Value", "Median Home Value", cut_labels, 17000)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "HomeValue_Cost", "Median Home\nValue", cut_labels)  
+
+```
+
+
+\newpage
+## Housing Environment  
+**Indicator**: Overcrowding  
+**Variable**: Overcrowding  
+**Source**: ACS  
+**Definition**: Percent of households with more than 1 occupant per room.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "Overcrowd_PCT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "Overcrowd_PCT", "Summary Statistics for Overcrowding")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "Overcrowd_PCT", "Histogram of Overcrowding", "Overcrowding", cut_labels, .9)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "Overcrowd_PCT", "Overcrowding", cut_labels)  
+
+```
+
+
+
+\newpage
+## Housing Environment  
+**Indicator**: Housing Cost Burden  
+**Variable**: Housing Cost Burden  
+**Source**: ACS  
+**Definition**: Percentage of households that spend 30% or more of their household income on housing.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "Housingburden30_PCT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "Housingburden30_PCT", "Summary Statistics for Housing Cost Burden")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "Housingburden30_PCT", "Histogram of Housing Cost Burden", "Housing Cost Burden", cut_labels, .7)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "Housingburden30_PCT", "Housing Cost\nBurden", cut_labels)  
+
+```
+
+
+\newpage
+## Housing Environment  
+**Indicator**: Severe Housing Cost Burden  
+**Variable**: Severe Housing Cost Burden  
+**Source**: ACS  
+**Definition**: Percentage of households that spend 50% or more of their household income on housing.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "Housingburden50_PCT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "Housingburden50_PCT", "Summary Statistics for Severe Housing Cost Burden")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "Housingburden50_PCT", "Histogram of Severe Housing Cost Burden", "Severe Housing Cost Burden", cut_labels, .4)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "Housingburden50_PCT", "Severe Housing\nCost Burden", cut_labels)  
+
+```
+
+
+\newpage
+## Housing Environment  
+**Indicator**: Severe Housing Cost Burden  
+**Variable**: Severe Housing Cost Burden  
+**Source**: RWJF County Health Rankings (original source: Comprehensive Housing Affordability Strategy [CHAS] data)  
+**Definition**: Percentage of households with at least 1 of 4 housing problems: overcrowding, high housing costs, lack of kitchen facilities, or lack of plumbing facilities.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "HousingProblems_PCT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "HousingProblems_PCT", "Summary Statistics for Severe Housing Cost Burden")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "HousingProblems_PCT", "Histogram of Severe Housing Cost Burden", "Severe Housing Cost Burden", cut_labels, .009)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "HousingProblems_PCT", "Severe Housing\nCost Burden", cut_labels)  
+
+```
+
+
+\newpage
+## Housing Environment  
+**Indicator**: Vacancy  
+**Variable**: Vacancy  
+**Source**: ACS  
+**Definition**: Estimated percent of housing units that are vacant. A housing unit is vacant if no one is living it in at the time of enumeration, unless occupants are temporarily absent.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "Vacancy_PCT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "Vacancy_PCT", "Summary Statistics for Vacancy")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "Vacancy_PCT", "Histogram of Vacancy", "Vacancy", cut_labels, 1)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "Vacancy_PCT", "Vacancy", cut_labels)  
+
+```
+
+
+\newpage
+## Correlation Coefficients Housing Environment  
+```{r, echo=FALSE, warning=FALSE, message=FALSE, results='hide'}
+
+# Call the function and get both the data and cut.labels
+corr(final_data, "Housing Environment")
+
+
+```
+
+
+\newpage
+## Neighborhood and Built Environment  
+**Indicator**: Access to Opportunities for Physical Activity  
+**Variable**: Access to Opportunities for Physical Activity  
+**Source**: RWJF County Health Rankings (original source: ArcGIS Business Analyst and ArcGIS Online; YMCA; US Census TIGER/Line Shapefiles)  
+**Definition**: Percentage of population with adequate access to locations for physical activity.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "PAAccess_PCT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "PAAccess_PCT", "Summary Statistics for Access to opportunities for physical activity")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "PAAccess_PCT", "Histogram of Access to opportunities for physical activity", "Access to opportunities for physical activity", cut_labels, .01)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "PAAccess_PCT", "Access to opp.\nphysical activity", cut_labels)  
+
+```
+
+
+\newpage
+## Neighborhood and Built Environment  
+**Indicator**: Developed Land  
+**Variable**: Developed Land  
+**Source**: National Environmental Public Health Tracking Network (original source: MRLC National Land Cover Database; NCHS Urban/Rural classifications)  
+**Definition**: Percent of land used for development.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "LandDev_PCT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "LandDev_PCT", "Summary Statistics for Developed Land")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "LandDev_PCT", "Histogram of Developed Land", "Developed Land", cut_labels, 1.2)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "LandDev_PCT", "Developed\nLand", cut_labels)  
+
+```
+
+
+\newpage
+## Neighborhood and Built Environment  
+**Indicator**: Highway Proximity (People)  
+**Variable**: Highway Proximity (People)  
+**Source**: National Environmental Public Health Tracking Network (original source: NAVTEQ 2010; TomTom 2015 onward)  
+**Definition**: Percent of people living within 150 meters of a highway.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "HighwayProximity_PCT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "HighwayProximity_PCT", "Summary Statistics for Highway Proximity (People)")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "HighwayProximity_PCT", "Histogram of Highway Proximity (People)", "Highway Proximity (People)", cut_labels, .4)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "HighwayProximity_PCT", "Highway\nProx (People)", cut_labels)  
+
+```
+
+
+\newpage
+## Neighborhood and Built Environment  
+**Indicator**: Impervious Surface  
+**Variable**: Impervious Surface  
+**Source**: National Environmental Public Health Tracking Network (original source: MRLC National Land Cover Database; NCHS Urban/Rural classifications)  
+**Definition**: Average percent of developed imperviousness.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "ImpervSurface_PCT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "ImpervSurface_PCT", "Summary Statistics for Impervious Surface")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "ImpervSurface_PCT", "Histogram of Impervious Surface", "Impervious Surface", cut_labels, .7)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "ImpervSurface_PCT", "Impervious\nSurface", cut_labels)  
+
+```
+
+
+\newpage
+## Neighborhood and Built Environment  
+**Indicator**: Park Access  
+**Variable**: Park Access (1/2 Mile)  
+**Source**: National Environmental Public Health Tracking Network (original source: NAVTEQ 2010; TomTom and PAD-US 2015 onward)  
+**Definition**: Percent of people living within 1/2 mile of a park.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "ParkWithinHalfMi_PCT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "ParkWithinHalfMi_PCT", "Summary Statistics for Park Access")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "ParkWithinHalfMi_PCT", "Histogram of Park Access", "Park Access", cut_labels, 1)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "ParkWithinHalfMi_PCT", "Park Access", cut_labels)  
+
+```
+
+
+\newpage
+## Neighborhood and Built Environment  
+**Indicator**: Park Access  
+**Variable**: Park Access (1 Mile)  
+**Source**: National Environmental Public Health Tracking Network (original source: NAVTEQ 2010; TomTom and PAD-US 2015 onward)  
+**Definition**: Percent of people living within 1 mile of a park.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "ParkWithinOneMi_PCT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "ParkWithinOneMi_PCT", "Summary Statistics for Park Access")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "ParkWithinOneMi_PCT", "Histogram of Park Access", "Park Access", cut_labels, 1)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "ParkWithinOneMi_PCT", "Park Access", cut_labels)  
+
+```
+
+
+\newpage
+## Neighborhood and Built Environment  
+**Indicator**: Traffic Volume  
+**Variable**: Traffic Volume  
+**Source**: RWJF County Health Rankings (original source: Environmental Public Health Tracking Network)  
+**Definition**: Average traffic volume per meter of major roadways in the county.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "Traffic_Vol")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "Traffic_Vol", "Summary Statistics for Traffic Volume")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "Traffic_Vol", "Histogram of Traffic Volume", "Traffic Volume", cut_labels, 23)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "Traffic_Vol", "Traffic Volume", cut_labels)  
+
+```
+
+
+\newpage
+## Correlation Coefficients Neighborhood and Built Environment  
+```{r, echo=FALSE, warning=FALSE, message=FALSE, results='hide'}
+
+# Call the function and get both the data and cut.labels
+corr(final_data, "Neighborhood and Built Environment")
+
+
+```
+
+
+\newpage
+## Physical Environment   
+**Indicator**: Air pollution  
+**Variable**: Air pollution  
+**Source**: National Environmental Public Health Tracking Network (original source: US Environmental Protection Agency (EPA).The Annual PM2.5 National Ambient Air Quality Standard (NAAQS) is 12.0 micrograms per cubic meter)  
+**Definition**: Current and historical air quality PM 2.5 highest annual average concentration.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "AirPollution_PM")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "AirPollution_PM", "Summary Statistics for Air pollution")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "AirPollution_PM", "Histogram of Air pollution", "Air pollution", cut_labels, .2)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "AirPollution_PM", "Air pollution", cut_labels)  
+
+```
+
+
+\newpage
+## Physical Environment  
+**Indicator**: Agriculture Land Usage  
+**Variable**: Agriculture Land Usage  
+**Source**: National Environmental Public Health Tracking Network (original source: US Environmental Protection Agency (EPA).The Annual PM2.5 National Ambient Air Quality Standard (NAAQS) is 12.0 micrograms per cubic meter)  
+**Definition**: Percent of land used for agriculture.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "AgLandUse_PCT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "AgLandUse_PCT", "Summary Statistics for Agriculture Land Usage")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "AgLandUse_PCT", "Histogram of Agriculture Land Usage", "Agriculture Land Usage", cut_labels, 1)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "AgLandUse_PCT", "Agriculture\nLand Us.", cut_labels)  
+
+```
+
+
+\newpage
+## Physical Environment  
+**Indicator**: Drinking Water Violations  
+**Variable**: Drinking Water Violations  
+**Source**: RWJF County Health Rankings (original source: Safe Drinking Water Information System)  
+**Definition**: Indicator of the presence of health-related drinking water violations. 'Yes' indicates the presence of a violation, 'No' indicates no violation.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "WaterViolation_YN")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "WaterViolation_YN", "Summary Statistics for Drinking Water Violations")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "WaterViolation_YN", "Histogram of Drinking Water Violations", "Drinking Water Violations", cut_labels, 1)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "WaterViolation_YN", "Drinking\nWater\nViolations", cut_labels)  
+
+```
+
+
+\newpage
+## Physical Environment  
+**Indicator**: Forest Coverage  
+**Variable**: Forest Coverage  
+**Source**: National Environmental Public Health Tracking Network (original source: MRLC National Land Cover Database; NCHS Urban/Rural classifications)  
+**Definition**: Percent of land covered by forest.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "ForestCover_PCT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "ForestCover_PCT", "Summary Statistics for Forest Coverage")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "ForestCover_PCT", "Histogram of Forest Coverage", "Forest Coverage", cut_labels, 1)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "ForestCover_PCT", "Forest\nCoverage", cut_labels)  
+
+```
+
+
+\newpage
+## Physical Environment  
+**Indicator**: Historical Drought  
+**Variable**: Historical Drought  
+**Source**: National Environmental Public Health Tracking Network (original source: Standardized Precipitation Evapotranspiration Index; United states Drought Monitor)  
+**Definition**: Percent of weeks a county was in drought by year.  
+Also available:  
+1. Total number of weeks a county was in drought  
+2. Percent of weeks a county was in drought  
+3. Total number of weeks a county was in drought by year  
+4. Maximum number of consecutive weeks a county was in drought by year  
+5. Counties currently experiencing drought  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "WeeksModDrought_PCT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "WeeksModDrought_PCT", "Summary Statistics for Historical Drought")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab2(final_data, "WeeksModDrought_PCT")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=2.5}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "WeeksModDrought_PCT", "Histogram of Historical Drought", "Historical Drought", cut_labels, 2.2)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "WeeksModDrought_PCT", "Historical\nDrought", cut_labels)  
+
+```
+
+
+\newpage
+## Physical Environment  
+**Indicator**: Historical Temperature and Heat Index  
+**Variable**: Annual Number of Extreme Heat Days  
+**Source**: Centers for Disease Control and Prevention’s Environmental Public Health Tracking Program  
+**Definition**: Annual Number of Extreme Heat Days.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "ExtremeHeatDays_COUNT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "ExtremeHeatDays_COUNT", "Summary Statistics for Historical Temperature and Heat Index")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "ExtremeHeatDays_COUNT", "Histogram of Historical Temperature and Heat Index", "Historical Temperature and Heat Index", cut_labels, 1)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "ExtremeHeatDays_COUNT", "Hist. Temp.\nand Heat Ind.", cut_labels)  
+
+```
+
+
+\newpage
+## Physical Environment  
+**Indicator**: Historical Temperature and Heat Index  
+**Variable**: Annual Number of Extreme Heat Events  
+**Source**: Centers for Disease Control and Prevention’s Environmental Public Health Tracking Program  
+**Definition**: Annual Number of Extreme Heat Events.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "ExtremeHeatEvents_COUNT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "ExtremeHeatEvents_COUNT", "Summary Statistics for Annual Number of Extreme Heat Events")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "ExtremeHeatEvents_COUNT", "Histogram of Annual Number of Extreme Heat Events", "Annual Number of Extreme Heat Events", cut_labels, 1)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "ExtremeHeatEvents_COUNT", "Ann. Num. of\nExt. Heat Ev.", cut_labels)  
+
+```
+
+
+\newpage
+## Physical Environment  
+**Indicator**: Ozone  
+**Variable**: Ozone  
+**Source**: National Environmental Public Health Tracking Network (original source: EPA)  
+**Definition**: O3: Number of days over Air Quality Standard (monitored and modeled data).  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "DaysOverStandard_COUNT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "DaysOverStandard_COUNT", "Summary Statistics for Ozone")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "DaysOverStandard_COUNT", "Histogram of Ozone", "Ozone", cut_labels, 3)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "DaysOverStandard_COUNT", "Ozone", cut_labels)  
+
+```
+
+
+\newpage
+## Physical Environment  
+**Indicator**: Water Coverage  
+**Variable**: Water Coverage  
+**Source**: National Environmental Public Health Tracking Network (original source: EPA)  
+**Definition**: Percent of land covered by water.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "WaterCover_PCT")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "WaterCover_PCT", "Summary Statistics for Water Coverage")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "WaterCover_PCT", "Histogram of Water Coverage", "Water Coverage", cut_labels, .9)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "WaterCover_PCT", "Water\nCoverage", cut_labels)  
+
+```
+
+
+\newpage
+## Correlation Coefficients Physical Environment  
+```{r, echo=FALSE, warning=FALSE, message=FALSE, results='hide'}
+
+# Call the function and get both the data and cut.labels
+corr(final_data, "Physical Environment")
+
+
+```
+
+
+\newpage
+## Racial and Economic Segregation  
+**Indicator**: Residential Segregation - Black/White  
+**Variable**: Residential Segregation - Black/White  
+**Source**: RWJF County Health Rankings (Original source: ACS)  
+**Definition**: Index of dissimilarity where higher values indicate greater residential segregation between Black and white county residents.  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Call the function and get both the data and cut.labels
+cat_var_result <- cat.var(final_data, "ResSeg_BW")
+
+# Extract the modified data
+final_data <- cat_var_result$data
+
+# Extract the cut labels
+cut_labels <- cat_var_result$labels
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Calculate mean, median, max, and min for civic_orgs_PER1K
+stat.tab(final_data, "ResSeg_BW", "Summary Statistics for Residential Segregation")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+# Plot histogram for Poverty_PCT
+histogram(final_data, "ResSeg_BW", "Histogram of Residential Segregation", "Residential Segregation", cut_labels, 1)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=4}
+
+# Call the function
+mp_data <- spatial(final_data)
+
+map(mp_data, "ResSeg_BW", "Residential\nSegregation", cut_labels)  
+
+```
+
+
+\newpage
+## Correlation Coefficients Racial and Economic Segregation  
+```{r, echo=FALSE, warning=FALSE, message=FALSE, results='hide'}
+
+# Call the function and get both the data and cut.labels
+corr(final_data, "Racial and Economic Segregation")
+
+
+```
+
+
+\newpage
+## Correlation Coefficients CVD Mortality  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+variable_labels <- c(
+  "volunteer_PCT" = "Volunteer Percent",
+  "civic_orgs_PER1K" = "Civic Organizations",
+  "clustering_PCT" = "Clustering Percent",
+  "support_RATIO" = "Support Ratio",
+  "Youth_PCT" = "Youth Percent",
+  "EconConnectedness" = "Econ. Connect.",
+  "English_PCT" = "English Percent",
+  "Population_CT" = "Total Population",
+  "Blackpop_PCT" = "Black",
+  "AIANpop_PCT" = "AIAIN",
+  "Asianpop_PCT" = "Asian",
+  "NHPIpop_PCT" = "NHOPI",
+  "Multiracepop_PCT" = "Multi-Race",
+  "Hispanicpop_PCT" = "Hispanic",
+  "Whitepop_PCT" = "White",
+  "Stability_PCT" = "Percent Stability",
+  "Parent_PCT" = "Single-Parent HH",
+  "SocialAssoc_PCT" = "Social Ass.",
+  "TotalJailPop_COUNT" = "Jail Pop.",
+  "Unemployment_PCT" = "Percent Unemployment",
+  "Unemployment_RT" = "Unemployment Rate",
+  "SNAP_PCT" = "SNAP (ACS)",
+  "StampSNAP_PCT" = "SNAP (HRSA)",
+  "Homeowner_PCT" = "Home Ownership",
+  "Gini_IDX" = "Income inequality (Gini Index)",
+  "Livable_PCT" = "Livable Income",
+  "Medianincome_USD" = "Med. House Inc. (ACS)",
+  "income" = "Med. House Inc. (SAIPE)",
+  "Percapitaincome_USD" = "Per Capita Income",
+  "Poverty_PCT" = "People in Poverty (ACS)",
+  "povpct" = "People in Poverty (SAIPE)",
+  "Assistance_PCT" = "Public Ass. Inc.",
+  "College_PCT" = "College Educated",
+  "Highschool_PCT" = "High School Educated",
+  "SchoolFunding_Dollar" = "School Funding Adequacy",
+  "FEI_Index" = "Food Environment Index",
+  "FoodInsecurity_PCT" = "Food Insecurity",
+  "FoodSwamp_RATIO" = "Food Swamps",
+  "AccessToFood_PCT" = "Limited Acc. to Healthy Foods",
+  "Broadband_PCT" = "Broadband Access",
+  "PatCarCardio_COUNT" = "Cardiologist Avail.",
+  "stg_hosp" = "Hospital Avail.",
+  "PrimaryCarePhys_COUNT" = "Primary Care Phys. Avail.",
+  "total_cost" = "Total Health Care Cost",
+  "APRNs_COUNT" = "Nurse Pract. Avail.",
+  "Insurance_PCT" = "Percent Uninsured (ACS)",
+  "pctui" = "Percent Uninsured (SAHIE)",
+  "Diabetes_PCT" = "Diabetes Prev. (SAHIE)",
+  "dm_prev_adj" = "Diabetes Prev. (CDC)",
+  "ExcessAlcohol_PCT" = "Excessive Drinking",
+  "FreqMentalDistress_PCT" = "Freq. Mental Distress",
+  "FreqPhysDistress_PCT" = "Freq. Physical Distress",
+  "prev_hd" = "Heart Disease Prev.",
+  "pl_highchol" = "High Cholesterol Prev.",
+  "Obesity_PCT" = "Obesity Prev. (RWJF)",
+  "ob_prev_adj" = "Obesity Prev. (CDC)",
+  "PhysInactivity_PCT" = "Physical Inactivity (RWJF)",
+  "LTPIA_prev_adj" = "Physical Inactivity (CDC)",
+  "PoorHealth_PCT" = "Poor or Fair Health",
+  "PoorMentHealth_DAYS" = "Poor Mental Health Days",
+  "PoorPhysHealth_DAYS" = "Poor Physical Health Days",
+  "Smoking_PCT" = "Smoking Prevalence",
+  "HomeValue_Cost" = "Median Home Value",
+  "Overcrowd_PCT" = "Overcrowding",
+  "Housingburden30_PCT" = "Housing Cost Burden",
+  "Housingburden50_PCT" = "Sev. Housing Cost Burd. (ACS)",
+  "HousingProblems_PCT" = "Sev. Housing Cost Burd. (RWJF)",
+  "Vacancy_PCT" = "Vacancy",
+  "PAAccess_PCT" = "Access to Opp. for Phys Act",
+  "LandDev_PCT" = "Developed Land",
+  "HighwayProximity_PCT" = "Highway Prox.",
+  "ImpervSurface_PCT" = "Imper. Surface",
+  "ParkWithinHalfMi_PCT" = "Park Access (1/2)",
+  "ParkWithinOneMi_PCT" = "Park Access (1)",
+  "Traffic_Vol" = "Traffic Volume",
+  "AirPollution_PM" = "Air pollution",
+  "AgLandUse_PCT" = "Agr. Land Usage",
+  "WaterViolation_YN" = "Drink. Water Viol.",
+  "ForestCover_PCT" = "Forest Cov.",
+  "WeeksModDrought_PCT" = "Hist. Drought",
+  "ExtremeHeatDays_COUNT" = "Ann. Number of Ext. Heat Days",
+  "ExtremeHeatEvents_COUNT" = "Ann. Number of Ext. Heat Events",
+  "DaysOverStandard_COUNT" = "Ozone",
+  "WaterCover_PCT" = "Water Coverage",
+  "ResSeg_BW" = "Resid. Seg. - B/W",
+  "allcvd" = "CVD Mortality"
+)
+
+# Compute correlation coefficients with allcvd
+cor_results <- final_data %>%
+  select(all_of(names(variable_labels)), allcvd) %>%
+  summarise(across(all_of(names(variable_labels)), ~ cor(.x, final_data$allcvd, use = "complete.obs"))) %>%
+  pivot_longer(cols = everything(), names_to = "Variable", values_to = "Correlation") %>%
+  arrange(desc(Correlation))
+
+
+# Rename the variables in the table
+cor_results$Variable <- variable_labels[cor_results$Variable]
+
+# Split the dataset into two halves
+midpoint <- ceiling(nrow(cor_results) / 2)
+
+# First table: first half of variables (after sorting)
+first_half <- cor_results[1:midpoint, ]
+
+# Second table: second half of variables (after sorting)
+second_half <- cor_results[(midpoint + 1):nrow(cor_results), ]
+
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+first_half %>%
+  kable(caption = NA, digits = 3) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"), position = "left", full_width = F) %>%
+  column_spec(1, background = "#D3D3D3") %>%
+  column_spec(2, background = "white") %>%
+  row_spec(0, bold = TRUE, color = "black")
+
+```
+
+
+\newpage
+## Correlation Coefficients CVD Mortality  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+second_half %>%
+  kable(caption = NA, digits = 3) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"), position = "left", full_width = F) %>%
+  column_spec(1, background = "#D3D3D3") %>%
+  column_spec(2, background = "white") %>%
+  row_spec(0, bold = TRUE, color = "black")
+
+```
+
+
